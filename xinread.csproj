@@ -1,0 +1,213 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net11.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>xinread</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon Condition="Exists('Assets\AppIcon.ico')">Assets\AppIcon.ico</ApplicationIcon>
+    <Platforms>x64;ARM64</Platforms>
+
+    <!--
+      程序集名称保持 xinread：它决定了数据目录、AUMID 引用和既有用户数据的归处。
+      面向用户显示的名字（窗口标题、开始菜单、文件属性）在这里和 Package.appxmanifest 中统一为「小信阅读」。
+    -->
+    <AssemblyName>xinread</AssemblyName>
+    <Product>小信阅读</Product>
+    <AssemblyTitle>小信阅读</AssemblyTitle>
+    <FileDescription>小信阅读</FileDescription>
+    <Company>小信阅读</Company>
+
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant())</RuntimeIdentifier>
+    <PublishProfile Condition="Exists('Properties\PublishProfiles\win-$(Platform).pubxml')">win-$(Platform).pubxml</PublishProfile>
+    <UseWinUI>true</UseWinUI>
+    <WinUISDKReferences>false</WinUISDKReferences>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!--
+      由 Program.cs 自己的 Main 负责启动（见该文件注释），
+      因此禁用 XAML 自动生成的入口点，否则会出现两个 Main。
+    -->
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+  </PropertyGroup>
+
+  <!--
+    ============================ 应用商店打包配置 ============================
+
+    目标：单个 .msixbundle 同时覆盖 x64 与 ARM64，交给 Microsoft Store 上传。
+
+    · 自包含：把 .NET 运行时打进包里，用户无需预装 .NET。
+    · 裁剪：去掉未使用的运行时实现，显著缩小包体。
+    · Windows App SDK 走"框架包依赖"（见下），由商店负责安装运行时。
+
+    构建命令（也可用仓库根目录的 pack-store.ps1）：
+      dotnet publish -c Release -p:Platform=x64   /p:PublishProfile=StoreBundle
+      dotnet publish -c Release -p:Platform=ARM64 /p:PublishProfile=StoreBundle
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- 自包含：发布目录里带完整 .NET 运行时，用户无需预装 .NET -->
+    <SelfContained>true</SelfContained>
+
+    <!--
+      重要：WinUI 3 目前不支持程序集裁剪。
+      它的 XAML 运行时大量依赖反射激活类型，任何 PublishTrimmed=true
+      （包括 TrimMode=copyused）都会在启动时崩在 Microsoft.UI.Xaml.dll
+      （0xc000027b），实测无解。因此这里显式关闭，改由下面的细粒度
+      Windows App SDK 引用来缩小包体——那条路实测能把包从 34MB 降到 12MB。
+    -->
+    <PublishTrimmed>false</PublishTrimmed>
+
+    <!--
+      应用只提供简体中文界面。这里同时影响两处：
+        1. 剔除 .NET 运行时带来的其它语言卫星资源（体积优化）；
+        2. 与 Package.appxmanifest 里声明的 <Resource Language="zh-CN"/> 保持一致。
+      注意两者的语言标记写法不同：MSBuild 用 zh-Hans，Appx 清单用 zh-CN。
+    -->
+    <SatelliteResourceLanguages>zh-Hans</SatelliteResourceLanguages>
+
+    <!-- 缩短路径，避免深层目录名把文件路径推过 MAX_PATH -->
+    <UseShortFileNames>true</UseShortFileNames>
+  </PropertyGroup>
+
+  <!--
+    商店包里不需要调试符号（.pdb），移除后运行行为不变。
+    注意：mscordaccore / mscordbi / createdump 等虽然名字像"调试专用"，
+    WinUI 3 应用启动时实际会用到，删掉会导致 0xc000027b 崩溃，切勿排除。
+  -->
+  <Target Name="RemoveSymbolFiles" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">
+    <ItemGroup>
+      <_SymbolFiles Include="$(PublishDir)**\*.pdb" />
+    </ItemGroup>
+    <Delete Files="@(_SymbolFiles)" ContinueOnError="true" />
+  </Target>
+
+  <!--
+    .NET 9 起已不再支持 PublishReadyToRun；WinUI 的自包含发布也与此组合不兼容，
+    留着只会在 restore/build 阶段报错，因此显式关闭。
+  -->
+  <PropertyGroup>
+    <PublishReadyToRun>false</PublishReadyToRun>
+  </PropertyGroup>
+
+  <!--
+    ========================= Windows App SDK 依赖方式 =========================
+
+    WindowsPackageType=MSIX 让应用以"框架依赖"方式运行：包里不复制 Windows App SDK
+    运行时，而是在清单里声明 PackageDependency(Microsoft.WindowsAppRuntime.2)。
+    商店（以及本机安装时）会自动安装匹配版本的运行时框架包。
+
+    如果哪天需要脱离商店、以完全自包含的 MSIX 分发，把下面这行改为
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained> 即可，
+    代价是每个架构的包都会多出 40MB 左右的运行时。
+  -->
+  <PropertyGroup>
+    <WindowsPackageType>MSIX</WindowsPackageType>
+    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
+
+    <!--
+      以 MSIX 安装时，运行时框架包由应用商店在安装阶段一并装好，应用自己不需要再去
+      查找/补齐依赖。而 NuGet 的默认行为会在 MSIX + 非自包含时自动启用
+      DeploymentManager 的初始化代码，那段代码走反射激活
+      Microsoft.Windows.ApplicationModel.WindowsAppRuntime.DeploymentInitializeOptions，
+      裁剪后该投影会被移除，启动时直接抛 REGDB_E_CLASSNOTREG 崩溃。
+
+      显式关掉它：既避免崩溃，也省掉一段无用的启动逻辑。
+    -->
+    <WindowsAppSdkDeploymentManagerInitialize>false</WindowsAppSdkDeploymentManagerInitialize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      用细粒度包替代总包 Microsoft.WindowsAppSDK，避免把用不到的大组件打进包里：
+        · .AI + .ML 会带入 onnxruntime.dll(22MB) + DirectML.dll(18MB)，本应用完全不使用
+        · .Search 依赖 .AI/.ML；.Widgets / .DWrite 本应用也不需要
+      WinUI 会自带所需的 WebView2 引用，因此这里只保留实际用到的部分。
+    -->
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="*" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinApp" Version="*" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Base" Version="2.7.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" Version="2.7.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.7.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.7.0" />
+    <!-- 框架依赖模式下必须显式引用运行时包，否则清单里不会生成 PackageDependency。 -->
+    <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" Version="2.7.0" />
+    <PackageReference Include="QRCoder" Version="1.8.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\SplashScreen.scale-200.png" />
+    <Content Include="Assets\LockScreenLogo.scale-200.png" />
+    <Content Include="Assets\Square150x150Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-48_altform-lightunplated.png" />
+    <Content Include="Assets\StoreLogo.png" />
+    <Content Include="Assets\AppIcon.ico" />
+    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <!--
+    Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
+    Tools extension to be activated for this project even if the Windows App SDK Nuget
+    package has not yet been restored.
+  -->
+  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ProjectCapability Include="Msix" />
+  </ItemGroup>
+
+  <!--
+    Microsoft.Windows.SDK.BuildTools.WinApp adds first-class support for
+    `dotnet run` on packaged WinUI apps: it hooks the .NET CLI Run target to
+    register a debug identity via the winapp CLI and launch the app with
+    package identity (AUMID).
+    Set <EnableWinAppRunSupport>false</EnableWinAppRunSupport> in a
+    <PropertyGroup> above to opt out.
+  -->
+  <ItemGroup>
+    <None Update="Pages\LoginPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="Pages\ReaderPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <None Update="Pages\ShelfPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+  </ItemGroup>
+
+  <!--
+    tools/ 下是开发期用的独立小工具（目前是图标生成器），其源码与 obj 产物
+    不属于应用本身；默认的 **/*.cs 通配会把它们一起编进来，必须排除。
+  -->
+  <ItemGroup>
+    <Compile Remove="tools\**" />
+    <None Remove="tools\**" />
+    <Content Remove="tools\**" />
+    <Page Remove="tools\**" />
+    <PRIResource Remove="tools\**" />
+    <EmbeddedResource Remove="tools\**" />
+  </ItemGroup>
+
+  <!--
+    Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
+    Explorer "Package and Publish" context menu entry to be enabled for this project even if
+    the Windows App SDK Nuget package has not yet been restored.
+  -->
+  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+  </PropertyGroup>
+
+  <!--
+    ========================= Legacy: MSIX 打包开关 ==========================
+    AppxBundle 的架构列表由 StoreBundle 发布配置提供；
+    面向商店时关闭签名（由商店在认证后重新签名）。
+  -->
+  <PropertyGroup Condition="'$(Configuration)' != 'Debug'">
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+  </PropertyGroup>
+</Project>

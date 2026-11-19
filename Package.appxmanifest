@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap10 rescap">
+
+  <Identity
+    Name="27506sunnysky.205975404E4A6"
+    Publisher="CN=F63F72CB-11CF-4649-86D2-C66971E4FB29"
+    Version="1.0.0.0" />
+
+  <!--
+    PhoneIdentity 是 Windows Phone 时代的遗留元素，桌面应用不会用到；
+    它的 PhoneProductId 必须是 GUID（不能写成包名），因此保留一个固定的 GUID。
+  -->
+  <mp:PhoneIdentity PhoneProductId="347ba5bb-5269-47b6-9c5e-36098ae7961d" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+
+  <Properties>
+    <DisplayName>小信阅读</DisplayName>
+    <PublisherDisplayName>sunnysky</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+    <uap10:PackageIntegrity>
+      <uap10:Content Enforcement="on"/>
+    </uap10:PackageIntegrity>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26226.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26226.0" />
+  </Dependencies>
+
+  <Resources>
+    <!--
+      应用界面文案全部是硬编码中文，没有 .resw 本地化资源。
+      如果这里保留模板默认的 "x-generate"，MakeAppx 会按 resources.pri 自动推断，
+      而本项目没有任何本地化资源，于是回退成 EN-US，商店就会显示"只支持英文"。
+      因此显式声明成简体中文。
+    -->
+    <Resource Language="zh-CN"/>
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+      Executable="$targetnametoken$.exe"
+      EntryPoint="$targetentrypoint$">
+      <uap:VisualElements
+        DisplayName="小信阅读"
+        Description="小信阅读"
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

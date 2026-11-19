@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "xinread (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "xinread (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

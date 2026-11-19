@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="xinread.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:xinread">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <!-- Other merged dictionaries here -->
+            </ResourceDictionary.MergedDictionaries>
+
+            <!--
+                正文渲染用的画刷。这些控件是在 C# 里动态创建的，无法使用 {ThemeResource}
+                标记扩展，因此改由 ReaderTheme 按当前主题从下面的字典里取，
+                主题切换时阅读页会重新取一次。三种主题都要定义，避免切换后某个块消失。
+            -->
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="ReaderQuoteBackgroundBrush" Color="#0F000000" />
+                    <SolidColorBrush x:Key="ReaderQuoteBorderBrush" Color="#33000000" />
+                    <SolidColorBrush x:Key="ReaderCodeBackgroundBrush" Color="#0F000000" />
+                    <SolidColorBrush x:Key="ReaderDividerBrush" Color="#1F000000" />
+                    <SolidColorBrush x:Key="ReaderSecondaryTextBrush" Color="#FF5D5D5D" />
+                    <SolidColorBrush x:Key="ReaderHighlightBrush" Color="#FFFFECB3" />
+                </ResourceDictionary>
+
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="ReaderQuoteBackgroundBrush" Color="#1AFFFFFF" />
+                    <SolidColorBrush x:Key="ReaderQuoteBorderBrush" Color="#33FFFFFF" />
+                    <SolidColorBrush x:Key="ReaderCodeBackgroundBrush" Color="#1AFFFFFF" />
+                    <SolidColorBrush x:Key="ReaderDividerBrush" Color="#26FFFFFF" />
+                    <SolidColorBrush x:Key="ReaderSecondaryTextBrush" Color="#FFB0B0B0" />
+                    <SolidColorBrush x:Key="ReaderHighlightBrush" Color="#FF4A3B00" />
+                </ResourceDictionary>
+
+                <!-- 高对比度主题沿用系统配色，不要写死颜色，否则会覆盖用户的对比度设置。 -->
+                <ResourceDictionary x:Key="HighContrast">
+                    <SolidColorBrush x:Key="ReaderQuoteBackgroundBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+                    <SolidColorBrush x:Key="ReaderQuoteBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="ReaderCodeBackgroundBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+                    <SolidColorBrush x:Key="ReaderDividerBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
+                    <SolidColorBrush x:Key="ReaderSecondaryTextBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="ReaderHighlightBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <!-- Other app resources here -->
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
