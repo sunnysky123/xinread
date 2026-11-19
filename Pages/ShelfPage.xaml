@@ -14,14 +14,19 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!--
+            标题栏随窗口宽度收缩：放得下时搜索框与按钮平铺，
+            放不下时搜索收成放大镜图标，刷新与登录/退出一起收进 ☰（与阅读页一致）。
+        -->
         <Grid
+            x:Name="HeaderHost"
             Padding="24,16,24,8"
             ColumnSpacing="12"
-            RowSpacing="4">
+            RowSpacing="4"
+            SizeChanged="OnHeaderSizeChanged">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -40,7 +45,7 @@
             <TextBlock
                 x:Name="GuestHint"
                 Grid.Row="1"
-                Grid.ColumnSpan="6"
+                Grid.ColumnSpan="5"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                 Style="{StaticResource CaptionTextBlockStyle}"
                 Text="登录后可同步书架与阅读进度；未登录时下面展示推荐书目，可试看前 3 章。"
@@ -56,27 +61,76 @@
                 QueryIcon="Find"
                 TextChanged="OnSearchTextChanged" />
 
+            <!-- 窄屏时的搜索入口：点击后在浮层里输入。 -->
             <Button
-                x:Name="RefreshButton"
+                x:Name="SearchButton"
+                Grid.Column="2"
+                VerticalAlignment="Center"
+                AutomationProperties.Name="搜索"
+                Click="OnSearchButtonClick"
+                ToolTipService.ToolTip="搜索"
+                Visibility="Collapsed">
+                <SymbolIcon Symbol="Find" />
+                <Button.Flyout>
+                    <Flyout
+                        x:Name="SearchFlyout"
+                        Opening="OnSearchFlyoutOpening"
+                        Placement="BottomEdgeAlignedRight">
+                        <AutoSuggestBox
+                            x:Name="CompactSearchBox"
+                            Width="220"
+                            PlaceholderText="搜索书名或作者"
+                            QueryIcon="Find"
+                            QuerySubmitted="OnCompactSearchSubmitted"
+                            TextChanged="OnCompactSearchTextChanged" />
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
+
+            <!--
+                平铺态的操作区：刷新 + 登录态二选一（未登录显示「登录」，已登录显示「退出登录」）。
+                窄屏时整块收进 ☰，菜单项由 OnActionsFlyoutOpening 按同样规则生成。
+            -->
+            <StackPanel
+                x:Name="HeaderActions"
                 Grid.Column="3"
                 VerticalAlignment="Center"
-                Click="OnRefreshClick"
-                Content="刷新" />
+                Orientation="Horizontal"
+                Spacing="12">
+                <Button
+                    x:Name="RefreshButton"
+                    Click="OnRefreshClick"
+                    Content="刷新" />
 
+                <Button
+                    x:Name="SignInButton"
+                    Click="OnSignInClick"
+                    Content="登录"
+                    Style="{StaticResource AccentButtonStyle}" />
+
+                <Button
+                    x:Name="SignOutButton"
+                    Click="OnSignOutClick"
+                    Content="退出登录" />
+            </StackPanel>
+
+            <!-- 窄屏入口：点击后展开刷新与登录/退出（内容按当前登录状态重建）。 -->
             <Button
-                x:Name="SignOutButton"
+                x:Name="MenuButton"
                 Grid.Column="4"
                 VerticalAlignment="Center"
-                Click="OnSignOutClick"
-                Content="退出登录" />
-
-            <Button
-                x:Name="SignInButton"
-                Grid.Column="5"
-                VerticalAlignment="Center"
-                Click="OnSignInClick"
-                Content="登录"
-                Style="{StaticResource AccentButtonStyle}" />
+                AutomationProperties.Name="更多操作"
+                Content="&#x2630;"
+                FontSize="16"
+                ToolTipService.ToolTip="更多操作"
+                Visibility="Collapsed">
+                <Button.Flyout>
+                    <Flyout
+                        x:Name="ActionsFlyout"
+                        Opening="OnActionsFlyoutOpening"
+                        Placement="BottomEdgeAlignedRight" />
+                </Button.Flyout>
+            </Button>
         </Grid>
 
         <Grid Grid.Row="1">
@@ -108,13 +162,27 @@
                 IsItemClickEnabled="True"
                 ItemClick="OnBookClick"
                 ItemsSource="{x:Bind FilteredBooks}"
+                Loaded="OnBooksViewLoaded"
                 SelectionMode="None"
-                VerticalContentAlignment="Stretch">
+                SizeChanged="OnBooksViewSizeChanged"
+                VerticalContentAlignment="Top">
+                <!--
+                    列数与格宽由 UpdateBookCells 按可用宽度重算（见 .xaml.cs）。
+                    交给默认算法时，列数按首张卡片的固定宽度算，一行铺不满的余量会全堆在行尾，
+                    右侧留白于是明显比左侧宽。重算后每格等宽、N 格正好铺满一行，
+                    卡片在格内居中，两侧留白因此始终相等。
+                -->
+                <GridView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <ItemsWrapGrid Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </GridView.ItemsPanel>
                 <GridView.ItemContainerStyle>
-                    <!-- 书与书之间留出呼吸空间，默认相邻条目几乎贴在一起。 -->
                     <Style TargetType="GridViewItem">
-                        <Setter Property="Margin" Value="0,0,24,24" />
-                        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                        <!-- 卡片在格子里居中，格子比卡片宽出来的部分左右均分，就是书间距。 -->
+                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                        <Setter Property="Margin" Value="0,0,0,24" />
+                        <Setter Property="VerticalContentAlignment" Value="Top" />
                     </Style>
                 </GridView.ItemContainerStyle>
                 <GridView.ItemTemplate>

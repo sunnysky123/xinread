@@ -18,6 +18,9 @@
     <FileDescription>小信阅读</FileDescription>
     <Company>小信阅读</Company>
 
+    <!-- 与 Package.appxmanifest 的 Identity/@Version 保持一致，否则 exe 文件属性里的版本会落后于包版本。 -->
+    <Version>1.0.1.0</Version>
+
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant())</RuntimeIdentifier>
     <PublishProfile Condition="Exists('Properties\PublishProfiles\win-$(Platform).pubxml')">win-$(Platform).pubxml</PublishProfile>
     <UseWinUI>true</UseWinUI>

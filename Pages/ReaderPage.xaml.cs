@@ -816,8 +816,8 @@ public sealed partial class ReaderPage : Page
         double width = Math.Clamp(ToolbarHost.ActualWidth - 48, 200, 260);
         var panel = new StackPanel { Spacing = 8, Width = width };
 
-        panel.Children.Add(BuildActionRow("上一章", CloseAnd(OnPrevClick), PrevButton.IsEnabled, "向左翻一章"));
-        panel.Children.Add(BuildActionRow("下一章", CloseAnd(OnNextClick), NextButton.IsEnabled, "向右翻一章"));
+        panel.Children.Add(BuildActionRow("上一章", OnPrevClick, PrevButton.IsEnabled, "向左翻一章"));
+        panel.Children.Add(BuildActionRow("下一章", OnNextClick, NextButton.IsEnabled, "向右翻一章"));
 
         if (ChapterBox.Items.Count > 0)
         {
@@ -844,8 +844,8 @@ public sealed partial class ReaderPage : Page
         fontRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         fontRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
 
-        Button decrease = BuildActionRow("A−", CloseAnd(OnDecreaseFontClick), FontDecreaseButton.IsEnabled, "减小字号");
-        Button increase = BuildActionRow("A+", CloseAnd(OnIncreaseFontClick), FontIncreaseButton.IsEnabled, "增大字号");
+        Button decrease = BuildActionRow("A−", OnDecreaseFontClick, FontDecreaseButton.IsEnabled, "减小字号");
+        Button increase = BuildActionRow("A+", OnIncreaseFontClick, FontIncreaseButton.IsEnabled, "增大字号");
         Grid.SetColumn(increase, 1);
         fontRow.Children.Add(decrease);
         fontRow.Children.Add(increase);
@@ -874,7 +874,7 @@ public sealed partial class ReaderPage : Page
         bool speakEnabled = SpeakButton.IsEnabled;
         Button speak = BuildActionRow(
             $"{glyph} {speakLabel}",
-            CloseAnd(OnSpeakClick),
+            OnSpeakClick,
             speakEnabled,
             speakEnabled ? "朗读当前章节" : "这一章没有可朗读的正文");
 
@@ -894,56 +894,9 @@ public sealed partial class ReaderPage : Page
         ActionsFlyout.Content = panel;
     }
 
-    /// <summary>包一层：先收起菜单再执行原操作，避免菜单浮在正文上挡住翻章结果。</summary>
-    private RoutedEventHandler CloseAnd(RoutedEventHandler handler) => (sender, e) =>
-    {
-        ActionsFlyout.Hide();
-        handler(sender, e);
-    };
-
+    /// <summary>☰ 菜单里的一个操作项；先收起浮层再执行，禁用态保留可读文字。</summary>
     private Button BuildActionRow(string text, RoutedEventHandler? click, bool isEnabled, string description)
-    {
-        var button = new Button
-        {
-            Content = text,
-            IsEnabled = isEnabled,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            HorizontalContentAlignment = HorizontalAlignment.Left,
-            MinWidth = 0,
-        };
-
-        // 禁用态的 Flyout 按钮文字会淡到几乎看不见，这里保持可读的灰色并说明原因。
-        // 用 TryGetValue 而不是索引器：主题资源在某些环境下可能取不到，索引器会直接抛异常。
-        if (!isEnabled)
-        {
-            button.Foreground = DisabledTextBrush();
-            AutomationProperties.SetName(button, $"{description}（当前不可用）");
-        }
-        else
-        {
-            AutomationProperties.SetName(button, description);
-        }
-
-        if (click is not null)
-        {
-            button.Click += click;
-        }
-
-        return button;
-    }
-
-    /// <summary>禁用态文字画刷；资源缺失时退回半透明灰，避免取不到就抛异常。</summary>
-    private static Brush DisabledTextBrush()
-    {
-        if (Application.Current?.Resources is { } resources
-            && resources.TryGetValue("TextFillColorDisabledBrush", out object? value)
-            && value is Brush brush)
-        {
-            return brush;
-        }
-
-        return new SolidColorBrush(Windows.UI.Color.FromArgb(0x5C, 0x80, 0x80, 0x80));
-    }
+        => FlyoutMenu.BuildRow(ActionsFlyout, text, click, isEnabled, description);
 
     private void OnBackClick(object sender, RoutedEventArgs e)
     {

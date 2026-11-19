@@ -11,7 +11,7 @@
   <Identity
     Name="27506sunnysky.205975404E4A6"
     Publisher="CN=F63F72CB-11CF-4649-86D2-C66971E4FB29"
-    Version="1.0.0.0" />
+    Version="1.0.1.0" />
 
   <!--
     PhoneIdentity 是 Windows Phone 时代的遗留元素，桌面应用不会用到；
