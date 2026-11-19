@@ -1,16 +1,14 @@
 <!--
-  Replace the placeholders before publishing:
-    [Developer Name] → your store publisher name (currently "sunnysky")
-    [Contact Email]  → an address that can receive privacy inquiries
-    [Effective Date] → e.g. 2026-11-20
-  The rest reflects the app's actual behaviour; update it if the features change.
+  This document reflects the app's actual behaviour.
+  Contact is via GitHub Issues, so no email address is needed.
+  If a change in features alters how data is handled, update this document and the effective date above.
   Chinese version: PRIVACY.md
 -->
 
 # 小信阅读 (Xinread) Privacy Policy
 
-**Effective date:** [Effective Date]
-**Developer:** [Developer Name]
+**Effective date:** 2026-11-19
+**Developer:** sunnysky
 **Product:** 小信阅读 (Xinread), a Windows application (the "App")
 
 [中文版本](PRIVACY.md)
@@ -108,9 +106,11 @@ If a change in the App's features alters how data is handled (for example, addin
 
 ## 9. Contact
 
-For any questions about this policy or about data handling, contact:
+For any questions about this policy or about data handling, please open a GitHub Issue:
 
-**Email:** [Contact Email]
+**GitHub Issues:** <https://github.com/sunnysky123/xinread/issues>
+
+Note that Issues are publicly visible — please do not paste account credentials, tokens, or other personal information there. If your question involves sensitive details, describe the situation in the Issue and we will follow up privately.
 
 ---
 
