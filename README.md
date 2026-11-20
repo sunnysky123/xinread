@@ -9,6 +9,28 @@ WinUI 3 版微信读书客户端。登录、书架、目录、正文解析均为
 
 隐私政策：[中文](PRIVACY.md) · [English](PRIVACY.en.md)
 
+## 下载安装
+
+已上架 **Microsoft Store**，推荐直接安装——.NET 运行时与 Windows App SDK 都由商店自动
+装好，无需手动配置任何开发环境：
+
+[![从 Microsoft Store 获取](https://img.shields.io/badge/Microsoft%20Store-获取小信阅读-0067b8?logo=microsoftstore&logoColor=white)](https://apps.microsoft.com/detail/9PB5KNCG1HR9?hl=zh-cn&gl=CN)
+
+商店链接：<https://apps.microsoft.com/detail/9PB5KNCG1HR9?hl=zh-cn&gl=CN>
+
+安装步骤：
+
+1. 打开上面的链接（或在 Microsoft Store 里搜索「小信阅读」）。
+2. 点击「获取」/「安装」，等待下载完成（x64 + ARM64 合包，约 95 MB，商店会按机型下发对应架构）。
+3. 安装完成后点「打开」，或在开始菜单搜索「小信阅读」启动。
+
+首次打开进入书架页（未登录时显示官网推荐书目，可试读前 3 章）；点右上角「登录」，
+用微信扫码即可登录，之后书架换成你自己的书。详细功能见下面的[使用](#使用)一节。
+
+- 系统要求：Windows 10 1809（`10.0.17763`）及以上，x64 / ARM64
+- 商店版由 Microsoft 重新签名并随版本自动更新；卸载走「设置 > 应用 > 已安装的应用」
+- 想自己编译或做二次开发，见[从源码运行](#从源码运行)
+
 ## 截图
 
 **书架（未登录）** — 展示官网推荐书目，每本标「可试看」，可直接试读前 3 章。
@@ -24,7 +46,9 @@ WinUI 3 版微信读书客户端。登录、书架、目录、正文解析均为
 
 深色模式完全跟随 Windows 的系统设置，没有单独开关。
 
-## 运行
+## 从源码运行
+
+普通用户请直接按上面的[下载安装](#下载安装)从商店安装，本节只对需要自己编译的人有效。
 
 ```powershell
 dotnet run -p:Platform=x64
@@ -67,6 +91,8 @@ dotnet run -- --preview <目录>                   # 额外输出放大预览，
 `tools/` 已被 `xinread.csproj` 排除，不会编进应用。
 
 ## 发布到 Microsoft Store
+
+> 本节是维护者打包上传的流程。普通用户不需要看——直接[从商店下载安装](#下载安装)即可。
 
 一条命令产出 x64 + ARM64 的多架构 bundle：
 
